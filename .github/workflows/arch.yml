@@ -1,0 +1,32 @@
+name: "JobSummaries"
+on: push
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        version: [2.72.0, 2.72.1, 2.72.2, 2.72.3, 2.72.4, 2.72.5, 2.73.0, 2.73.2, 2.73.3, 2.74.0, 2.74.1, 2.75.0]
+      fail-fast: false
+
+    runs-on: macos-15
+    steps:
+      - name: Check architecture
+        run: uname -m
+
+      - name: Download JFrog CLI
+        run: wget https://releases.jfrog.io/artifactory/jfrog-cli/v2/${{ matrix.version }}/jfrog-cli-mac-arm64/jfrog
+      - name: Show executable details
+        run: file jfrog | tee file.log
+      - name: Assert executable is arm64
+        run: |
+          if grep -q "Mach-O 64-bit executable arm64" file.log; then
+            echo "Executable is arm64"
+          else
+            echo "Executable is not arm64"
+            exit 1
+          fi
+      - name: Print JFrog CLI version
+        run: |
+          chmod +x ./jfrog
+          ./jfrog --version
+        if: always()
